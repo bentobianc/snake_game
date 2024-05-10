@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snake Game</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: black;
+  }
+
+  canvas {
+    border: 2px solid black;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Estilo do tabuleiro quadriculado */
+  .light-green {
+    background-color: #98FB98;
+  }
+
+  .dark-green {
+    background-color: #7CFC00;
+  }
+</style>
+</head>
+<body>
+<canvas id="snakeCanvas" width="400" height="400"></canvas>
+<script>
+  const canvas = document.getElementById('snakeCanvas');
+  const ctx = canvas.getContext('2d');
+
+  const box = 20;
+  let snake = [{ x: 10, y: 10 }];
+  let food = { x: 0, y: 0 }; // Posição inicial da comida
+  let direction = 'right';
+  let speed = 100; // Velocidade inicial (em milissegundos)
+  let applesEaten = 0;
+
+  function drawSnake() {
+    snake.forEach((segment, index) => {
+      ctx.fillStyle = index === 0 ? 'white' : '#333'; // Quadrado da cabeça é branco
+      ctx.fillRect(segment.x * box, segment.y * box, box, box);
+      ctx.strokeStyle = '#f2f2f2';
+      ctx.strokeRect(segment.x * box, segment.y * box, box, box);
+    });
+  }
+
+  function drawFood() {
+    ctx.fillStyle = 'red';
+    ctx.fillRect(food.x * box, food.y * box, box, box);
+    ctx.strokeStyle = '#f2f2f2';
+    ctx.strokeRect(food.x * box, food.y * box, box, box);
+  }
+
+  function drawBoard() {
+    for (let i = 0; i < canvas.width / box; i++) {
+      for (let j = 0; j < canvas.height / box; j++) {
+        if (i % 2 === 0 && j % 2 === 0 || i % 2 !== 0 && j % 2 !== 0) {
+          ctx.fillStyle = 'light-green';
+        } else {
+          ctx.fillStyle = 'dark-green';
+        }
+        ctx.fillRect(i * box, j * box, box, box);
+      }
+    }
+  }
+
+  function moveSnake() {
+    const head = { x: snake[0].x, y: snake[0].y };
+    switch (direction) {
+      case 'up':
+        head.y--;
+        break;
+      case 'down':
+        head.y++;
+        break;
+      case 'left':
+        head.x--;
+        break;
+      case 'right':
+        head.x++;
+        break;
+    }
+
+    if (head.x === food.x && head.y === food.y) {
+      food = generateFoodPosition();
+      applesEaten++;
+      if (applesEaten % 5 === 0) {
+        speed *= 0.8; // Aumenta a velocidade em 20%
+        clearInterval(game);
+        game = setInterval(gameLoop, speed);
+      }
+    } else {
+      snake.pop();
+    }
+
+    snake.unshift(head);
+  }
+
+  function generateFoodPosition() {
+    let newFoodX, newFoodY;
+    do {
+      newFoodX = Math.floor(Math.random() * (canvas.width / box));
+      newFoodY = Math.floor(Math.random() * (canvas.height / box));
+    } while (snake.some(segment => segment.x === newFoodX && segment.y === newFoodY));
+    return { x: newFoodX, y: newFoodY };
+  }
+
+  function checkCollision() {
+    if (
+      snake[0].x < 0 ||
+      snake[0].x >= canvas.width / box ||
+      snake[0].y < 0 ||
+      snake[0].y >= canvas.height / box ||
+      snake.slice(1).some(segment => segment.x === snake[0].x && segment.y === snake[0].y)
+    ) {
+      clearInterval(game);
+      alert('Game Over!');
+    }
+  }
+
+  function gameLoop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawBoard();
+    drawSnake();
+    drawFood();
+    moveSnake();
+    checkCollision();
+  }
+
+  document.addEventListener('keydown', e => {
+    switch (e.key) {
+      case 'ArrowUp':
+        if (direction !== 'down') direction = 'up';
+        break;
+      case 'ArrowDown':
+        if (direction !== 'up') direction = 'down';
+        break;
+      case 'ArrowLeft':
+        if (direction !== 'right') direction = 'left';
+        break;
+      case 'ArrowRight':
+        if (direction !== 'left') direction = 'right';
+        break;
+    }
+  });
+
+  food = generateFoodPosition(); // Posicionar a comida inicialmente
+  let game = setInterval(gameLoop, speed); // Iniciar o jogo com a velocidade inicial
+</script>
+</body>
+</html>
